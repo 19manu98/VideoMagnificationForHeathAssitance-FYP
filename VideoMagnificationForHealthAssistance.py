@@ -5,6 +5,8 @@ import cv2
 import sys
 import math
 
+global change_top_left
+global change_bottom_right
 
 def recognize_face(image):
     casc_path = "haarcascade_frontalface_default.xml"
@@ -24,64 +26,88 @@ def main():
     else:
         video_capture = cv2.VideoCapture(sys.argv[1])
 
-    # get the first 2 frames and get the face
-    return_code, last_image = video_capture.read()
-    faces_last = recognize_face(last_image)
+    while True:
+        # get the first frame and get the face
+        return_code, last_image = video_capture.read()
+        faces_last = recognize_face(last_image)
+        if len(faces_last) > 0:
+            break
+        cv2.imshow("Faces found", last_image)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
-    top_left = (faces_last[0][0],faces_last[0][1])
-    bottom_right = (faces_last[0][0]+faces_last[0][3],faces_last[0][1]+faces_last[0][3])
-
-    return_code, current_image = video_capture.read()
-    faces_current = recognize_face(current_image)
+    # assign the values to variables
+    xl, yl, hl = faces_last[0][0], faces_last[0][1], faces_last[0][3]
+    top_left = (xl, yl)
+    bottom_right = (xl + hl, yl + hl)
 
     # calculate the different magnitude between the faces
     difference_top_left = []
     difference_bottom_right = []
 
     while True:
-        # capture frame-by-frame
-        image_last = current_image
-        faces_last = faces_current
 
-        return_code, current_image = video_capture.read()
-
-        if not return_code:
-            break
-
-        faces_current = recognize_face(current_image)
-
-        try:
-            change_top_left = math.sqrt(((faces_last[0][0]-faces_current[0][0])**2)+(faces_last[0][1]-faces_current[0][1])**2)
-            change_bottom_right = math.sqrt(((faces_last[0][0] + faces_last[0][3]-faces_current[0][0]-faces_current[0][3])**2)
-                                            +(faces_last[0][1]+faces_last[0][3]-faces_current[0][1]-faces_current[0][3])**2)
-            if(change_top_left < 6 or change_bottom_right < 8):
-                difference_top_left.append(0)
-                difference_bottom_right.append(math.sqrt(0))
+        while True:
+            # get the first frame and get the face
+            return_code, current_image = video_capture.read()
+            if return_code:
+                faces_current = recognize_face(current_image)
+                if len(faces_current) > 0:
+                    break
+                else:
+                    cv2.imshow("Faces found", current_image)
+                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                        break
             else:
-                difference_top_left.append(change_top_left)
-                difference_bottom_right.append(change_bottom_right)
-        except:
-            pass
+                break
 
-
-        if (change_top_left > 6 or change_bottom_right > 8):
+        if return_code:
+            xc, yc, hc = faces_current[0][0], faces_current[0][1], faces_current[0][3]
+            face = current_image[yc:yc + hc,xc:xc + hc]
+            face = cv2.resize(face,None,fx=0.5,fy=0.5)
+            rwidth = face.shape[0]
+            height, width = current_image.shape[:2]
+            swidth = width - rwidth -10
+            current_image[10:10+rwidth,swidth:width-10] = face
             try:
-                top_left = (faces_current[0][0], faces_current[0][1])
-                bottom_right = (faces_current[0][0] + faces_current[0][3], faces_current[0][1] + faces_current[0][3])
+                change_top_left = math.sqrt(((xl - xc) ** 2) + (yl - yc) ** 2)
+                change_bottom_right = math.sqrt(((xl + hl - xc - hc) ** 2) + (yl + hl - yc - hc) ** 2)
+                if (change_top_left < 6 or change_bottom_right < 8):
+                    difference_top_left.append(0)
+                    difference_bottom_right.append(0)
+                else:
+                    difference_top_left.append(change_top_left)
+                    difference_bottom_right.append(change_bottom_right)
             except:
                 pass
 
-        cv2.rectangle(current_image, top_left, bottom_right, (0, 255, 0), 2)
+            if (change_top_left > 6 or change_bottom_right > 8):
+                try:
+                    top_left = (xc, yc)
+                    bottom_right = (xc + hc, yc + hc)
+                except:
+                    pass
 
-        cv2.imshow("Faces found", current_image)
+            cv2.rectangle(current_image, top_left, bottom_right, (0, 255, 0), 2)
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+            # capture frame-by-frame
+            image_last = current_image
+            faces_last = faces_current
+            xl, yl, hl = xc, yc, hc
+
+            cv2.imshow("Faces found", current_image)
+
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        else:
             break
 
     # When everything is done, release the capture
     video_capture.release()
     cv2.destroyAllWindows()
-
+    print(difference_bottom_right)
+    print(difference_top_left)
     average_change_top_left = sum(difference_top_left)/len(difference_top_left)
     average_change_bottom_right = sum(difference_bottom_right) / len(difference_bottom_right)
     print(average_change_top_left)

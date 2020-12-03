@@ -1,0 +1,13 @@
+{
+    "amplification": 20,
+    "date": "2020-12-03-13-43-52",
+    "file": "test3.mp4",
+    "high": 3,
+    "levels": 3,
+    "low": 0.4,
+    "meta_target": ".\\videos\\test3_color_evm_2020-12-03-13-43-41.json",
+    "mode": "COLOR",
+    "output": ".\\videos",
+    "suffix": "color",
+    "target": ".\\videos\\test3_color_evm_2020-12-03-13-43-41.mp4"
+}
