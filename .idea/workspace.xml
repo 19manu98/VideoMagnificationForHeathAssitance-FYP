@@ -2,9 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="18771ba6-26a8-491b-8177-1e188d724bd2" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RecognizeFaceParameters.py" beforeDir="false" afterPath="$PROJECT_DIR$/RecognizeFaceParameters.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/VideoMagnificationForHealthAssistance.py" beforeDir="false" afterPath="$PROJECT_DIR$/VideoMagnificationForHealthAssistance.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -21,7 +19,7 @@
   <component name="PropertiesComponent">
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../imageprocessing/safety-helmet-opencv" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
@@ -107,6 +105,15 @@
       <workItem from="1605876359274" duration="2177000" />
       <workItem from="1605887729796" duration="1905000" />
       <workItem from="1606383763024" duration="16000" />
+      <workItem from="1607006815384" duration="4734000" />
+      <workItem from="1607681730334" duration="10261000" />
+      <workItem from="1607704189161" duration="1272000" />
+      <workItem from="1607775372525" duration="162000" />
+      <workItem from="1607883511075" duration="294000" />
+      <workItem from="1607897086354" duration="741000" />
+      <workItem from="1607958606245" duration="5145000" />
+      <workItem from="1607968925938" duration="611000" />
+      <workItem from="1607987903999" duration="18000" />
     </task>
     <servers />
   </component>
@@ -128,6 +135,6 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/VideoMagnificationForHeathAssitance_FYP$RecognizeFaceParameters.coverage" NAME="RecognizeFaceParameters Coverage Results" MODIFIED="1605877968405" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/VideoMagnificationForHeathAssitance_FYP$VideoMagnificationForHealthAssistance.coverage" NAME="VideoMagnificationForHealthAssistance Coverage Results" MODIFIED="1605889035697" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/VideoMagnificationForHeathAssitance_FYP$VideoMagnificationForHealthAssistance.coverage" NAME="VideoMagnificationForHealthAssistance Coverage Results" MODIFIED="1607697137510" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
