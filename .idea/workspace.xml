@@ -2,10 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="18771ba6-26a8-491b-8177-1e188d724bd2" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RecognizeFaceParameters.py" beforeDir="false" afterPath="$PROJECT_DIR$/RecognizeFaceParameters.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/VideoMagnificationForHealthAssistance.py" beforeDir="false" afterPath="$PROJECT_DIR$/VideoMagnificationForHealthAssistance.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -107,6 +104,7 @@
       <workItem from="1605876359274" duration="2177000" />
       <workItem from="1605887729796" duration="1905000" />
       <workItem from="1606383763024" duration="16000" />
+      <workItem from="1608295553504" duration="509000" />
     </task>
     <servers />
   </component>
