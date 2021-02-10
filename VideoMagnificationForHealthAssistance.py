@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import time
 from scipy import signal
+from scipy.signal import butter,filtfilt
+
 
 def gaussinan_pyramid(image, level):
     copy = image.copy()
@@ -47,16 +49,23 @@ def main():
     green_channel_values = []
     blue_channel_values = []
     times = []
-    buffer_size = 150
+    buffer_size = 250
     buffer_green_mean = []
+    # Add titles
+    plt.title("Change of the different channels")
+    plt.xlabel("Frames")
+    plt.ylabel("Channel value")
+    plt.ion()
+    plt.show()
+    bpms = []
 
     # get a predefined video or webcam
     if len(sys.argv) < 2:
         video_capture = cv2.VideoCapture(0)
     else:
         video_capture = cv2.VideoCapture(sys.argv[1])
-    fps = video_capture.get(cv2.CAP_PROP_FPS)
-    print(fps)
+
+    index = 0
     while True:
         # get the first frame and get the face
         return_code, last_image = video_capture.read()
@@ -71,6 +80,11 @@ def main():
     xl, yl, hl = faces_last[0][0], faces_last[0][1], faces_last[0][3]
     top_left = (xl, yl)
     bottom_right = (xl + hl, yl + hl)
+    forehead_x1 = xl + int(hl * 0.25)
+    forehead_x2 = xl + int(hl * 0.60)
+    forehead_y1 = yl + int(hl * 0.10)
+    forehead_y2 = yl + int(hl * 0.20)
+
 
     # calculate the different magnitude between the faces
     difference_top_left = []
@@ -118,42 +132,103 @@ def main():
                 try:
                     top_left = (xc, yc)
                     bottom_right = (xc + hc, yc + hc)
+                    forehead_x1 = xc + int(hc * 0.25)
+                    forehead_x2 = xc + int(hc * 0.60)
+                    forehead_y1 = yc + int(hc * 0.10)
+                    forehead_y2 = yc + int(hc * 0.20)
                 except:
                     pass
 
             cv2.rectangle(current_image, top_left, bottom_right, (0, 255, 0), 2)
-            forehead_x1 = xc + int(hc * 0.45)
-            forehead_x2 = xc + int(hc * 0.55)
-            forehead_y1 = yc + int(hc * 0.1)
-            forehead_y2 = yc + int(hc * 0.25)
             forehead_region = current_image[forehead_y1: forehead_y2, forehead_x1:forehead_x2]
             b,g,r = cv2.split(forehead_region)
             b_mean = np.mean(b)
             g_mean = np.mean(g)
             r_mean = np.mean(r)
-            red_channel_values.append(r_mean*5)
-            green_channel_values.append(g_mean*5)
-            blue_channel_values.append(b_mean*5)
-            current_size = len(buffer_green_mean)
+            red_channel_values.append(r_mean)
+            green_channel_values.append(g_mean)
+            blue_channel_values.append(b_mean)
             times.append(time.time())
             buffer_green_mean.append(g_mean)
+            current_size = len(buffer_green_mean)
+
             if current_size > buffer_size:
+                index+=1
+                plt.clf()
                 times = times[1:]
                 buffer_green_mean = buffer_green_mean[1:]
 
+            if (current_size == (buffer_size+1)):
                 # calculate real fps regarding processor
-                real_fps = current_size / (times[-1]-times[0])
+                real_fps = float(current_size) / (times[-1]-times[0])
 
                 # signal detrending
                 signal_detrend = signal.detrend(buffer_green_mean)
+
+                #butterworth filter
+                timeLF = times[-1]-times[0]
+                cutoff = 0.059
+
+                nyq = 0.5 * real_fps
+                order = 2
+                n = int(timeLF * real_fps)
+
+                normal_cutoff = cutoff / nyq
+                b, a = butter(order,normal_cutoff,btype='low',analog=True)
+                signal_detrend = filtfilt(b,a,signal_detrend)
 
                 # signal interpolation
                 even_times = np.linspace(times[0],times[-1],current_size)
                 interp = np.interp(even_times,times,signal_detrend)
                 signal_interpolated = np.hamming(current_size) * interp
+                signal_interpolated = signal_interpolated - np.mean(signal_interpolated)
+
 
                 # normalize the signal
-                signal_normalization = signal_interpolated/np.linalg.norm(signal_interpolated)
+                #signal_normalization = signal_interpolated/np.linalg.norm(signal_interpolated)
+                signal_normalization = signal_interpolated/np.std(signal_interpolated)
+                #fast fourier transform
+                raw_signal = np.fft.fft(signal_normalization)
+                fft = np.abs(raw_signal)
+
+                # #freqs = float(real_fps)/current_size*np.arange(current_size/2+1)
+                freqs = np.fft.rfftfreq(current_size,1./real_fps)
+                freqs = 60. * freqs
+
+                idx = np.where((freqs >36) & (freqs<120))
+
+                pruned = fft[idx]
+
+                pfreq = freqs[idx]
+                freqs = pfreq
+
+                idx2 = np.argmax(pruned)
+                bpm = freqs[idx2]
+
+                print(bpm)
+                bpms.append(bpm)
+                # dataframe
+                df = pd.DataFrame({'x': range(0, index), 'bpm': bpms})
+
+                # style
+                plt.style.use('seaborn-darkgrid')
+
+                # palette
+                palette = plt.get_cmap('Set1')
+
+                # multiple line plot
+                num = 0
+                for column in df.drop('x', axis=1):
+                    num += 1
+                    plt.plot(df['x'], df[column], marker='', color=palette(num), linewidth=1, alpha=0.9, label=column)
+
+                # Add legend
+                plt.legend(loc=2, ncol=2)
+
+                plt.draw()
+                plt.pause(1)
+                # print(len(peaks[0]))
+                # print(times[-1]-times[0])
 
             cv2.rectangle(current_image, (forehead_x1,forehead_y1),(forehead_x2,forehead_y2),(0,0,255),2)
             # capture frame-by-frame
@@ -173,29 +248,7 @@ def main():
     video_capture.release()
     cv2.destroyAllWindows()
     print(len(blue_channel_values))
-    # dataframe
-    df = pd.DataFrame({'x':range(0,len(signal_normalization)),'signal_normalized':signal_normalization})
 
-    # style
-    plt.style.use('seaborn-darkgrid')
-
-    # palette
-    palette = plt.get_cmap('Set1')
-
-    # multiple line plot
-    num = 0
-    for column in df.drop('x',axis=1):
-        num += 1
-        plt.plot(df['x'],df[column],marker='',color=palette(num),linewidth=1,alpha=0.9,label=column)
-
-    # Add legend
-    plt.legend(loc=2,ncol=2)
-
-    # Add titles
-    plt.title("Change of the different channels")
-    plt.xlabel("Frames")
-    plt.ylabel("Channel value")
-    plt.show()
     average_change_top_left = sum(difference_top_left)/len(difference_top_left)
     average_change_bottom_right = sum(difference_bottom_right) / len(difference_bottom_right)
     print(average_change_top_left)
