@@ -10,7 +10,6 @@ import time
 from scipy import signal
 from scipy.signal import butter,filtfilt
 from face import recognize_face, forehead
-import matplotlib.pyplot as plt
 from plotting import create_bpm_plot, plot
 
 def main():
