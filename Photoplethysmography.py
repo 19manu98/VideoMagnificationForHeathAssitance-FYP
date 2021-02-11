@@ -9,9 +9,9 @@ import pandas as pd
 import time
 from scipy import signal
 from scipy.signal import butter,filtfilt
-
 from face import recognize_face, forehead
-from plotting import plot
+import matplotlib.pyplot as plt
+from plotting import create_bpm_plot, plot
 
 def main():
     red_channel_values = []
@@ -29,6 +29,10 @@ def main():
         video_capture = cv2.VideoCapture(sys.argv[1])
 
     index = 0
+
+    axes, fig = create_bpm_plot()
+    fig.show()
+
     while True:
         # get the first frame and get the face
         return_code, last_image = video_capture.read()
@@ -104,6 +108,7 @@ def main():
                 times = times[1:]
                 buffer_green_mean = buffer_green_mean[1:]
 
+
             if (current_size == (buffer_size+1)):
                 # calculate real fps regarding processor
                 real_fps = float(current_size) / (times[-1]-times[0])
@@ -155,10 +160,11 @@ def main():
                 bpms.append(bpm)
                 # dataframe
                 df = pd.DataFrame({'x': range(0, index), 'bpm': bpms})
-
+                plot(df,fig,axes)
 
 
             cv2.rectangle(current_image, (forehead_x1,forehead_y1),(forehead_x2,forehead_y2),(0,0,255),2)
+
             # capture frame-by-frame
             image_last = current_image
             faces_last = faces_current
@@ -166,20 +172,22 @@ def main():
 
             cv2.imshow("Faces found", current_image)
 
-            k = cv2.waitKey(33)
+            k = cv2.waitKey(1)
 
             if k==27:
                 break
-            elif k==101:
-                plot(df)
-
 
         else:
             break
 
+    cv2.destroyAllWindows()
+    cv2.waitKey(1)
+    for i in range(1, 5):
+        cv2.waitKey(1)
+    return
+
     # When everything is done, release the capture
     video_capture.release()
-    cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
