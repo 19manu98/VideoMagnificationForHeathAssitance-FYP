@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import time
 from scipy import signal
-from scipy.signal import butter,filtfilt
+from scipy.signal import butter,filtfilt,lfilter
 from face import recognize_face, forehead
 from plotting import create_bpm_plot, plot
 
@@ -117,15 +117,16 @@ def main():
 
                 #butterworth filter
                 timeLF = times[-1]-times[0]
-                cutoff = 0.059
 
                 nyq = 0.5 * real_fps
                 order = 2
-                n = int(timeLF * real_fps)
 
-                normal_cutoff = cutoff / nyq
-                b, a = butter(order,normal_cutoff,btype='low',analog=True)
-                signal_detrend = filtfilt(b,a,signal_detrend)
+                lowsignal = 0.6667 /nyq #0.6667 correspond to 40bpm
+                highsignal = 3 / nyq #3 correspond to 180bpm
+
+                b, a = butter(order,[lowsignal,highsignal],btype='band',analog=True)
+                #signal_detrend = filtfilt(b,a,signal_detrend)
+                signal_detrend = lfilter(b,a,signal_detrend)
 
                 # signal interpolation
                 even_times = np.linspace(times[0],times[-1],current_size)
