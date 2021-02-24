@@ -10,7 +10,7 @@ import time
 from scipy import signal
 from scipy.signal import butter,filtfilt,lfilter
 from face import recognize_face, forehead
-from plotting import create_bpm_plot, plot
+from plotting import create_bpm_plot, plot, create_green_plot,plot_green
 
 def main():
     red_channel_values = []
@@ -100,8 +100,10 @@ def main():
             blue_channel_values.append(b_mean)
             times.append(time.time())
             buffer_green_mean.append(g_mean)
+            axes1, fig1 = create_green_plot()
             current_size = len(buffer_green_mean)
-
+            dfg = pd.DataFrame({'x': range(0, current_size), 'green': buffer_green_mean})
+            plot_green(dfg,fig1,axes1)
             if current_size > buffer_size:
                 index+=1
                 times = times[1:]
