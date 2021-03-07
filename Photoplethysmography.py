@@ -2,6 +2,7 @@
 # build a program that take a video and recognizes faces
 
 import cv2
+import os
 import sys
 import math
 import numpy as np
@@ -11,21 +12,25 @@ from scipy import signal
 from scipy.signal import butter,filtfilt,lfilter
 from face import recognize_face, forehead
 from plotting import create_bpm_plot, plot, create_green_plot,plot_green
+from rotation import check_rotation, correct_rotation
 
 def main():
     red_channel_values = []
     green_channel_values = []
     blue_channel_values = []
     times = []
-    buffer_size = 250
+    buffer_size = 350
     buffer_green_mean = []
     bpms = []
+    rotateCode = None
 
     # get a predefined video or webcam
     if len(sys.argv) < 2:
         video_capture = cv2.VideoCapture(0)
     else:
         video_capture = cv2.VideoCapture(sys.argv[1])
+        absPath = os.path.abspath(sys.argv[1])
+        rotateCode = check_rotation(absPath)
 
     index = 0
 
@@ -35,6 +40,8 @@ def main():
     while True:
         # get the first frame and get the face
         return_code, last_image = video_capture.read()
+        if rotateCode is not None:
+            last_image = correct_rotation(last_image, rotateCode)
         faces_last = recognize_face(last_image)
         if len(faces_last) > 0:
             break
@@ -53,6 +60,8 @@ def main():
         while True:
             # get the first frame and get the face
             return_code, current_image = video_capture.read()
+            if rotateCode is not None:
+                current_image = correct_rotation(current_image, rotateCode)
             if return_code:
                 faces_current = recognize_face(current_image)
                 if len(faces_current) > 0:
@@ -72,7 +81,7 @@ def main():
             face = cv2.resize(face,None,fx=0.5,fy=0.5)
             rwidth = face.shape[0]
             height, width = current_image.shape[:2]
-            swidth = width - rwidth -10
+            swidth = width - rwidth - 10
             current_image[10:10+rwidth,swidth:width-10] = face
 
             try:
@@ -123,7 +132,7 @@ def main():
                 nyq = 0.5 * real_fps
                 order = 2
 
-                lowsignal = 0.6667 /nyq #0.6667 correspond to 40bpm
+                lowsignal = 0.6667 / nyq #0.6667 correspond to 40bpm
                 highsignal = 3 / nyq #3 correspond to 180bpm
 
                 b, a = butter(order,[lowsignal,highsignal],btype='band',analog=True)
@@ -145,7 +154,7 @@ def main():
                 raw_signal = np.fft.fft(signal_normalization)
                 fft = np.abs(raw_signal)
 
-                # #freqs = float(real_fps)/current_size*np.arange(current_size/2+1)
+                #freqs = float(real_fps)/current_size*np.arange(current_size/2+1)
                 freqs = np.fft.rfftfreq(current_size,1./real_fps)
                 freqs = 60. * freqs
 
