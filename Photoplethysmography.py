@@ -133,6 +133,7 @@ def main():
                 # signal interpolation
                 even_times = np.linspace(times[0],times[-1],current_size)
                 interp = np.interp(even_times,times,signal_detrend)
+                print(len(even_times),len(times))
                 signal_interpolated = np.hamming(current_size) * interp
                 signal_interpolated = signal_interpolated - np.mean(signal_interpolated)
 

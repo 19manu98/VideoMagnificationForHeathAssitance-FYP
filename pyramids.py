@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 
 def gaussinan_pyramid(image, level):
     copy = image.copy()
@@ -6,6 +7,7 @@ def gaussinan_pyramid(image, level):
     for i in range(level):
         copy = cv2.pyrDown(copy)
         gPyramid.append(copy)
+        print(np.shape(copy))
     return gPyramid
 
 def gaussinan_video_amplification(image):
