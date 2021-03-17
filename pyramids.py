@@ -1,6 +1,10 @@
 import cv2
 import numpy as np
 
+def check_content(buffer):
+    return len(set(buffer))
+
+
 def gaussinan_pyramid(image, level):
     copy = image.copy()
     gPyramid = [copy]

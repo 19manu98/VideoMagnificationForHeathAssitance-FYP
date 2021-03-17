@@ -10,9 +10,11 @@ import pandas as pd
 import time
 from scipy import signal
 from scipy.signal import butter,filtfilt,lfilter
+from scipy import fftpack
 from face import recognize_face, forehead
 from plotting import create_bpm_plot, plot, create_green_plot,plot_green
 from rotation import check_rotation, correct_rotation
+from pyramids import check_content
 
 def main():
     red_channel_values = []
@@ -30,7 +32,10 @@ def main():
     else:
         video_capture = cv2.VideoCapture(sys.argv[1])
         absPath = os.path.abspath(sys.argv[1])
-        rotateCode = check_rotation(absPath)
+        try:
+            rotateCode = check_rotation(absPath)
+        except:
+            pass
 
     index = 0
 
@@ -120,53 +125,57 @@ def main():
 
 
             if (current_size == (buffer_size+1)):
-                # calculate real fps regarding processor
-                real_fps = float(current_size) / (times[-1]-times[0])
+                if check_content(buffer_green_mean) == 1:
+                    bpm = 0
+                else:
+                    # calculate real fps regarding processor
+                    real_fps = float(current_size) / (times[-1]-times[0])
 
-                # signal detrending
-                signal_detrend = signal.detrend(buffer_green_mean)
+                    # signal detrending
+                    signal_detrend = signal.detrend(buffer_green_mean)
 
-                #butterworth filter
-                timeLF = times[-1]-times[0]
+                    #butterworth filter
+                    timeLF = times[-1]-times[0]
 
-                nyq = 0.5 * real_fps
-                order = 2
+                    nyq = 0.5 * real_fps
+                    order = 3
 
-                lowsignal = 0.6667 / nyq #0.6667 correspond to 40bpm
-                highsignal = 3 / nyq #3 correspond to 180bpm
+                    lowsignal = 0.6667 / nyq #0.6667 correspond to 40bpm
+                    highsignal = 3 / nyq #3 correspond to 180bpm
 
-                b, a = butter(order,[lowsignal,highsignal],btype='band',analog=True)
-                #signal_detrend = filtfilt(b,a,signal_detrend)
-                signal_detrend = lfilter(b,a,signal_detrend)
-
-                # signal interpolation
-                even_times = np.linspace(times[0],times[-1],current_size)
-                interp = np.interp(even_times,times,signal_detrend)
-                print(len(even_times),len(times))
-                signal_interpolated = np.hamming(current_size) * interp
-                signal_interpolated = signal_interpolated - np.mean(signal_interpolated)
+                    b, a = butter(order,[lowsignal,highsignal],btype='band',analog=True)
+                    #signal_detrend = filtfilt(b,a,signal_detrend)
+                    signal_detrend = lfilter(b,a,signal_detrend)
 
 
-                # normalize the signal
-                #signal_normalization = signal_interpolated/np.linalg.norm(signal_interpolated)
-                signal_normalization = signal_interpolated/np.std(signal_interpolated)
-                #fast fourier transform
-                raw_signal = np.fft.fft(signal_normalization)
-                fft = np.abs(raw_signal)
+                    # signal interpolation
+                    even_times = np.linspace(times[0],times[-1],current_size)
+                    interp = np.interp(even_times,times,signal_detrend)
 
-                #freqs = float(real_fps)/current_size*np.arange(current_size/2+1)
-                freqs = np.fft.rfftfreq(current_size,1./real_fps)
-                freqs = 60. * freqs
+                    signal_interpolated = np.hamming(current_size) * interp
+                    signal_interpolated = signal_interpolated - np.mean(signal_interpolated)
+                    # normalize the signal
+                    #signal_normalization = signal_interpolated/np.linalg.norm(signal_interpolated)
+                    signal_normalization = signal_interpolated/np.std(signal_interpolated)
 
-                idx = np.where((freqs >36) & (freqs<120))
+                    #fast fourier transform
+                    raw_signal = np.fft.fft(signal_normalization)
+                    fft = np.abs(raw_signal)
+                    # fft = signal.detrend(fft)
 
-                pruned = fft[idx]
+                    #freqs = float(real_fps)/current_size*np.arange(current_size/2+1)
+                    freqs = np.fft.rfftfreq(current_size,1./real_fps)
 
-                pfreq = freqs[idx]
-                freqs = pfreq
+                    freqs = 60. * freqs
 
-                idx2 = np.argmax(pruned)
-                bpm = freqs[idx2]
+                    idx = np.where((freqs >=36) & (freqs<130))
+
+                    pruned = fft[idx]
+                    pfreq = freqs[idx]
+                    freqs = pfreq
+                    idx2 = np.argmax(pruned)
+
+                    bpm = freqs[idx2]
 
                 # print(bpm)
                 bpms.append(bpm)
