@@ -2,7 +2,9 @@ import cv2
 import numpy as np
 
 def check_content(buffer):
-    return len(set(buffer))
+    maxV = max(buffer)
+    minV = min(buffer)
+    return maxV-minV
 
 
 def gaussinan_pyramid(image, level):

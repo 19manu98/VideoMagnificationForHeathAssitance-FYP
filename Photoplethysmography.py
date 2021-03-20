@@ -6,8 +6,6 @@ import os
 import sys
 import math
 import numpy as np
-# # Modin will connect to the Dask Client
-os.environ["MODIN_ENGINE"] = "dask"
 import pandas as pd
 import time
 from scipy import signal
@@ -20,14 +18,13 @@ from pyramids import check_content
 
 
 def main():
-    red_channel_values = []
     green_channel_values = []
-    blue_channel_values = []
     times = []
-    buffer_size = 100
+    buffer_size = 350
     buffer_green_mean = []
     bpms = []
     rotateCode = None
+    real_fps = None
     # get a predefined video or webcam
     if len(sys.argv) < 2:
         video_capture = cv2.VideoCapture(0)
@@ -35,7 +32,7 @@ def main():
         video_capture = cv2.VideoCapture(sys.argv[1])
         absPath = os.path.abspath(sys.argv[1])
         try:
-            rotateCode = check_rotation(absPath)
+            real_fps, rotateCode = check_rotation(absPath)
         except:
             pass
 
@@ -108,17 +105,13 @@ def main():
             cv2.rectangle(current_image, top_left, bottom_right, (0, 255, 0), 2)
             forehead_region = current_image[forehead_y1: forehead_y2, forehead_x1:forehead_x2]
             b,g,r = cv2.split(forehead_region)
-            # b_mean = np.mean(b)
-            # r_mean = np.mean(r)
-            g_mean = np.mean(g)
-            # red_channel_values.append(r_mean)
+            g_mean = np.mean(g,dtype=np.float64)
             green_channel_values.append(g_mean)
-            # blue_channel_values.append(b_mean)
             times.append(time.time())
             buffer_green_mean.append(g_mean)
             current_size = len(buffer_green_mean)
             dfg = pd.DataFrame({'x': range(0, len(green_channel_values)), 'green': green_channel_values})
-            # plot_green(dfg,fig1,axes1)
+            plot_green(dfg,fig1,axes1)
             if current_size > buffer_size:
                 index+=1
                 times = times[1:]
@@ -126,13 +119,13 @@ def main():
 
 
             if (current_size == (buffer_size+1)):
-                if check_content(buffer_green_mean) == 1:
+                if check_content(buffer_green_mean) < 0.5:
                     bpm = 0
                 else:
                     # calculate real fps regarding processor
-                    real_fps = float(buffer_size) / (times[-1]-times[0])
+                    if real_fps is None:
+                        real_fps = float(buffer_size) / (times[-1]-times[0])
                     print(real_fps)
-
                     # signal detrending
                     signal_detrend = signal.detrend(buffer_green_mean)
 
@@ -179,11 +172,10 @@ def main():
 
                     bpm = freqs[idx2]
 
-                # print(bpm)
                 bpms.append(bpm)
                 # dataframe
                 df = pd.DataFrame({'x': range(0, index), 'bpm': bpms})
-                # plot(df,fig,axes)
+                plot(df,fig,axes)
 
 
             cv2.rectangle(current_image, (forehead_x1,forehead_y1),(forehead_x2,forehead_y2),(0,0,255),2)
