@@ -6,26 +6,28 @@ import os
 import sys
 import math
 import numpy as np
+# # Modin will connect to the Dask Client
+os.environ["MODIN_ENGINE"] = "dask"
 import pandas as pd
 import time
 from scipy import signal
 from scipy.signal import butter,filtfilt,lfilter
-from scipy import fftpack
 from face import recognize_face, forehead
 from plotting import create_bpm_plot, plot, create_green_plot,plot_green
 from rotation import check_rotation, correct_rotation
 from pyramids import check_content
+
+
 
 def main():
     red_channel_values = []
     green_channel_values = []
     blue_channel_values = []
     times = []
-    buffer_size = 350
+    buffer_size = 100
     buffer_green_mean = []
     bpms = []
     rotateCode = None
-
     # get a predefined video or webcam
     if len(sys.argv) < 2:
         video_capture = cv2.VideoCapture(0)
@@ -41,7 +43,7 @@ def main():
 
     axes, fig = create_bpm_plot()
     fig.show()
-
+    axes1, fig1 = create_green_plot()
     while True:
         # get the first frame and get the face
         return_code, last_image = video_capture.read()
@@ -106,18 +108,17 @@ def main():
             cv2.rectangle(current_image, top_left, bottom_right, (0, 255, 0), 2)
             forehead_region = current_image[forehead_y1: forehead_y2, forehead_x1:forehead_x2]
             b,g,r = cv2.split(forehead_region)
-            b_mean = np.mean(b)
-            r_mean = np.mean(r)
+            # b_mean = np.mean(b)
+            # r_mean = np.mean(r)
             g_mean = np.mean(g)
-            red_channel_values.append(r_mean)
+            # red_channel_values.append(r_mean)
             green_channel_values.append(g_mean)
-            blue_channel_values.append(b_mean)
+            # blue_channel_values.append(b_mean)
             times.append(time.time())
             buffer_green_mean.append(g_mean)
-            axes1, fig1 = create_green_plot()
             current_size = len(buffer_green_mean)
-            dfg = pd.DataFrame({'x': range(0, current_size), 'green': buffer_green_mean})
-            plot_green(dfg,fig1,axes1)
+            dfg = pd.DataFrame({'x': range(0, len(green_channel_values)), 'green': green_channel_values})
+            # plot_green(dfg,fig1,axes1)
             if current_size > buffer_size:
                 index+=1
                 times = times[1:]
@@ -129,7 +130,8 @@ def main():
                     bpm = 0
                 else:
                     # calculate real fps regarding processor
-                    real_fps = float(current_size) / (times[-1]-times[0])
+                    real_fps = float(buffer_size) / (times[-1]-times[0])
+                    print(real_fps)
 
                     # signal detrending
                     signal_detrend = signal.detrend(buffer_green_mean)
@@ -149,10 +151,10 @@ def main():
 
 
                     # signal interpolation
-                    even_times = np.linspace(times[0],times[-1],current_size)
+                    even_times = np.linspace(times[0],times[-1],buffer_size)
                     interp = np.interp(even_times,times,signal_detrend)
 
-                    signal_interpolated = np.hamming(current_size) * interp
+                    signal_interpolated = np.hamming(buffer_size) * interp
                     signal_interpolated = signal_interpolated - np.mean(signal_interpolated)
                     # normalize the signal
                     #signal_normalization = signal_interpolated/np.linalg.norm(signal_interpolated)
@@ -164,7 +166,7 @@ def main():
                     # fft = signal.detrend(fft)
 
                     #freqs = float(real_fps)/current_size*np.arange(current_size/2+1)
-                    freqs = np.fft.rfftfreq(current_size,1./real_fps)
+                    freqs = np.fft.rfftfreq(buffer_size,1./real_fps)
 
                     freqs = 60. * freqs
 
@@ -181,7 +183,7 @@ def main():
                 bpms.append(bpm)
                 # dataframe
                 df = pd.DataFrame({'x': range(0, index), 'bpm': bpms})
-                plot(df,fig,axes)
+                # plot(df,fig,axes)
 
 
             cv2.rectangle(current_image, (forehead_x1,forehead_y1),(forehead_x2,forehead_y2),(0,0,255),2)
