@@ -31,10 +31,8 @@ def main():
     else:
         video_capture = cv2.VideoCapture(sys.argv[1])
         absPath = os.path.abspath(sys.argv[1])
-        try:
-            real_fps, rotateCode = check_rotation(absPath)
-        except:
-            pass
+        real_fps, rotateCode = check_rotation(absPath)
+        print(real_fps)
 
     index = 0
 
@@ -94,7 +92,7 @@ def main():
             except:
                 pass
 
-            if (change_top_left > 6 or change_bottom_right > 8):
+            if (change_top_left > 8 or change_bottom_right > 10):
                 try:
                     top_left = (xc, yc)
                     bottom_right = (xc + hc, yc + hc)
@@ -110,8 +108,8 @@ def main():
             times.append(time.time())
             buffer_green_mean.append(g_mean)
             current_size = len(buffer_green_mean)
-            dfg = pd.DataFrame({'x': range(0, len(green_channel_values)), 'green': green_channel_values})
-            plot_green(dfg,fig1,axes1)
+            # dfg = pd.DataFrame({'x': range(0, len(green_channel_values)), 'green': green_channel_values})
+            # plot_green(dfg,fig1,axes1)
             if current_size > buffer_size:
                 index+=1
                 times = times[1:]
@@ -125,7 +123,6 @@ def main():
                     # calculate real fps regarding processor
                     if real_fps is None:
                         real_fps = float(buffer_size) / (times[-1]-times[0])
-                    print(real_fps)
                     # signal detrending
                     signal_detrend = signal.detrend(buffer_green_mean)
 
@@ -163,7 +160,7 @@ def main():
 
                     freqs = 60. * freqs
 
-                    idx = np.where((freqs >=36) & (freqs<130))
+                    idx = np.where((freqs >=40) & (freqs<130))
 
                     pruned = fft[idx]
                     pfreq = freqs[idx]
@@ -172,10 +169,11 @@ def main():
 
                     bpm = freqs[idx2]
 
-                bpms.append(bpm)
+                bpms.append(int(bpm))
+                print(bpm)
                 # dataframe
-                df = pd.DataFrame({'x': range(0, index), 'bpm': bpms})
-                plot(df,fig,axes)
+                # df = pd.DataFrame({'x': range(0, index), 'bpm': bpms})
+                # plot(df,fig,axes)
 
 
             cv2.rectangle(current_image, (forehead_x1,forehead_y1),(forehead_x2,forehead_y2),(0,0,255),2)

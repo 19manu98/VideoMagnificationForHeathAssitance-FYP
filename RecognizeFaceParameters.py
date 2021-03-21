@@ -114,11 +114,11 @@ class VideoThread(threading.Thread):
         print('finished thread' + self.name)
 
 def main():
-    files = glob.glob("test/test11.mp4")
+    files = glob.glob("videos/test11.mp4")
     thread_lock = threading.Lock()
-    thread1 = VideoThread(1, "thread 1", "test/test1.mp4", thread_lock)
-    thread2 = VideoThread(1, "thread 2", "test/test2.mp4", thread_lock)
-    thread3 = VideoThread(1, "thread 3", "test/test3.mp4", thread_lock)
+    thread1 = VideoThread(1, "thread 1", "videos/test1.mp4", thread_lock)
+    thread2 = VideoThread(1, "thread 2", "videos/test2.mp4", thread_lock)
+    thread3 = VideoThread(1, "thread 3", "videos/test3.mp4", thread_lock)
     thread1.start()
     thread2.start()
     thread3.start()
