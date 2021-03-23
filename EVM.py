@@ -47,6 +47,8 @@ def main():
 
     # assign the values to variables
     xl, yl, hl = faces_last[0][0], faces_last[0][1], faces_last[0][3]
+    if hl %2 == 1:
+        hl += 1
     top_left = (xl, yl)
     bottom_right = (xl + hl, yl + hl)
     forehead_x1, forehead_x2, forehead_y1, forehead_y2 = forehead(xl,yl,hl)
@@ -71,12 +73,8 @@ def main():
 
         if return_code:
             xc, yc, hc = faces_current[0][0], faces_current[0][1], faces_current[0][3]
-            face = current_image[yc:yc + hc,xc:xc + hc]
-            face = cv2.resize(face,None,fx=0.5,fy=0.5)
-            rwidth = face.shape[0]
-            height, width = current_image.shape[:2]
-            swidth = width - rwidth -10
-            final_video=current_image
+            if hc % 2 == 1:
+                hc += 1
             # current_image[10:10+rwidth,swidth:width-10] = face
             axes1, fig1 = create_green_plot()
             try:
@@ -93,15 +91,22 @@ def main():
                 except:
                     pass
 
+            xc, yc = top_left
+            xc1, yx1 = bottom_right
+            face = current_image[yc:yx1, xc:xc1]
+            face = cv2.resize(face, None, fx=0.5, fy=0.5)
+            rwidth = face.shape[0]
+            height, width = current_image.shape[:2]
+            swidth = width - rwidth - 10
+            final_video = current_image
+
             cv2.rectangle(current_image, top_left, bottom_right, (0, 255, 0), 2)
-            faces.append(current_image)
-            gaussianPyramid = gaussinan_pyramid(current_image, 7)
+            faces.append(face)
+            gaussianPyramid = gaussinan_pyramid(face, 7)
             pyramids.append(gaussianPyramid[-1])
 
             if len(pyramids) > 30:
                 frames_arr = np.asarray(pyramids[-30:], dtype=np.float64)
-
-                print(len(frames_arr))
                 fft = fftpack.fft(frames_arr, axis=0)
                 frequencies = fftpack.fftfreq(frames_arr.shape[0], d=1.0 / 12)
                 bound_low = (np.abs(frequencies - 0.5)).argmin()
