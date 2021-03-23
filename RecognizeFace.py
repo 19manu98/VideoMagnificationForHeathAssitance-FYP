@@ -10,8 +10,8 @@ def recognize_face(image):
     casc_path = "haarcascade_frontalface_default.xml"
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + casc_path)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=5, minSize=(30, 30))
+    gray = cv2.GaussianBlur(gray, (25, 25), 0)
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=5, minSize=(100, 100))
 
     return faces
 
