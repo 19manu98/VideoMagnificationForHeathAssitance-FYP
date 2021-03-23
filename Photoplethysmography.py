@@ -11,11 +11,10 @@ import time
 from face import recognize_face, forehead
 from plotting import create_bpm_plot, plot, create_green_plot,plot_green
 from rotation import check_rotation, correct_rotation
-
 from processingSignal import processing
 
 
-def main():
+def Photoplethysmography(video):
     green_channel_values = []
     times = []
     buffer_size = 350
@@ -24,11 +23,11 @@ def main():
     rotateCode = None
     real_fps = None
     # get a predefined video or webcam
-    if len(sys.argv) < 2:
+    if video == 'webcam':
         video_capture = cv2.VideoCapture(0)
     else:
-        video_capture = cv2.VideoCapture(sys.argv[1])
-        absPath = os.path.abspath(sys.argv[1])
+        video_capture = cv2.VideoCapture(video)
+        absPath = os.path.abspath(video)
         real_fps, rotateCode = check_rotation(absPath)
 
     index = 0
@@ -44,7 +43,7 @@ def main():
         faces_last = recognize_face(last_image)
         if len(faces_last) > 0:
             break
-        cv2.imshow("Faces found", last_image)
+        cv2.imshow("Analysing video", last_image)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
@@ -66,7 +65,7 @@ def main():
                 if len(faces_current) > 0:
                     break
                 else:
-                    cv2.imshow("Faces found", current_image)
+                    cv2.imshow("Analysing video", current_image)
 
                     k = cv2.waitKey(33)
                     if k == 27:
@@ -115,6 +114,8 @@ def main():
             if (current_size == (buffer_size+1)):
                 bpm = processing(buffer_green_mean,times,buffer_size,real_fps)
                 bpms.append(int(bpm))
+                string = 'BPM: ' + str(int(bpm))
+                cv2.putText(current_image, string, (top_left[0]+10,top_left[1]-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
                 print(bpm)
                 # dataframe
                 # df = pd.DataFrame({'x': range(0, index), 'bpm': bpms})
@@ -128,7 +129,7 @@ def main():
             faces_last = faces_current
             xl, yl, hl = xc, yc, hc
 
-            cv2.imshow("Faces found", current_image)
+            cv2.imshow("Analysing video", current_image)
 
             k = cv2.waitKey(1)
 
@@ -147,9 +148,6 @@ def main():
     # When everything is done, release the capture
     video_capture.release()
 
-
-if __name__ == "__main__":
-    main()
 
 
 

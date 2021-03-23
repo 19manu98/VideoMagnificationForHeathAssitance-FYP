@@ -2,18 +2,19 @@
 # build a program that take a video and recognizes faces
 
 import cv2
-import sys
 import math
 import numpy as np
 import pandas as pd
 import time
-from scipy import signal, fftpack
-from scipy.signal import butter,filtfilt,lfilter
+from scipy import fftpack
 from face import recognize_face, forehead
 from pyramids import gaussinan_pyramid, gaussinan_video_amplification,laplacian_pyramid
 from plotting import create_bpm_plot, plot, create_green_plot,plot_green
+import os
+from rotation import check_rotation, correct_rotation
+from processingSignal import processing
 
-def main():
+def EVM(video):
     red_channel_values = []
     green_channel_values = []
     blue_channel_values = []
@@ -23,12 +24,15 @@ def main():
     buffer_size = 250
     buffer_green_mean = []
     bpms = []
-
+    rotateCode = None
+    real_fps = None
     # get a predefined video or webcam
-    if len(sys.argv) < 2:
+    if video == "webcam":
         video_capture = cv2.VideoCapture(0)
     else:
-        video_capture = cv2.VideoCapture(sys.argv[1])
+        video_capture = cv2.VideoCapture(video)
+        absPath = os.path.abspath(video)
+        real_fps, rotateCode = check_rotation(absPath)
 
     index = 0
 
@@ -38,10 +42,12 @@ def main():
     while True:
         # get the first frame and get the face
         return_code, last_image = video_capture.read()
+        if rotateCode is not None:
+            last_image = correct_rotation(last_image, rotateCode)
         faces_last = recognize_face(last_image)
         if len(faces_last) > 0:
             break
-        # cv2.imshow("Faces found", last_image)
+        cv2.imshow("Analysing video", last_image)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
@@ -58,12 +64,14 @@ def main():
         while True:
             # get the first frame and get the face
             return_code, current_image = video_capture.read()
+            if rotateCode is not None:
+                current_image = correct_rotation(current_image, rotateCode)
             if return_code:
                 faces_current = recognize_face(current_image)
                 if len(faces_current) > 0:
                     break
                 else:
-
+                    cv2.imshow("Analysing video", current_image)
 
                     k = cv2.waitKey(33)
                     if k == 27:
@@ -100,7 +108,6 @@ def main():
             swidth = width - rwidth - 10
             final_video = current_image
 
-            cv2.rectangle(current_image, top_left, bottom_right, (0, 255, 0), 2)
             faces.append(face)
             gaussianPyramid = gaussinan_pyramid(face, 7)
             pyramids.append(gaussianPyramid[-1])
@@ -125,7 +132,6 @@ def main():
                 for x in range(7):
                     size = (amplifiedFrame[x].shape[1], amplifiedFrame[x].shape[0])
                     img = cv2.pyrUp(img,dstsize = size)
-                    print(np.shape(img))
                 img = img+current_image
                 final_video = img
 
@@ -155,55 +161,11 @@ def main():
 
 
                 if (current_size == (buffer_size+1)):
-                    # calculate real fps regarding processor
-                    real_fps = float(current_size) / (times[-1]-times[0])
-
-                    # signal detrending
-                    signal_detrend = signal.detrend(buffer_green_mean)
-
-                    #butterworth filter
-                    timeLF = times[-1]-times[0]
-
-                    nyq = 0.5 * real_fps
-                    order = 2
-
-                    lowsignal = 0.6667 /nyq #0.6667 correspond to 40bpm
-                    highsignal = 3 / nyq #3 correspond to 180bpm
-
-                    b, a = butter(order,[lowsignal,highsignal],btype='band',analog=True)
-                    #signal_detrend = filtfilt(b,a,signal_detrend)
-                    signal_detrend = lfilter(b,a,signal_detrend)
-
-                    # signal interpolation
-                    even_times = np.linspace(times[0],times[-1],current_size)
-                    interp = np.interp(even_times,times,signal_detrend)
-                    signal_interpolated = np.hamming(current_size) * interp
-                    signal_interpolated = signal_interpolated - np.mean(signal_interpolated)
-
-
-                    # normalize the signal
-                    #signal_normalization = signal_interpolated/np.linalg.norm(signal_interpolated)
-                    signal_normalization = signal_interpolated/np.std(signal_interpolated)
-                    #fast fourier transform
-                    raw_signal = np.fft.fft(signal_normalization)
-                    fft = np.abs(raw_signal)
-                    # fft = fftpack.fft(signal_normalization,axis=0)
-                    # #freqs = float(real_fps)/current_size*np.arange(current_size/2+1)
-                    freqs = np.fft.rfftfreq(current_size,1./real_fps)
-                    freqs = 60. * freqs
-
-                    idx = np.where((freqs >36) & (freqs<120))
-
-                    pruned = fft[idx]
-
-                    pfreq = freqs[idx]
-                    freqs = pfreq
-
-                    idx2 = np.argmax(pruned)
-                    bpm = freqs[idx2]
-
-                    # print(bpm)
-                    bpms.append(bpm)
+                    bpm = processing(buffer_green_mean, times, buffer_size, real_fps)
+                    bpms.append(int(bpm))
+                    print(bpm)
+                    string = 'BPM: ' + str(int(bpm))
+                    cv2.putText(current_image, string, (top_left[0] + 10, top_left[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
                     # dataframe
                     df = pd.DataFrame({'x': range(0, index), 'bpm': bpms})
                     plot(df,fig,axes)
@@ -212,7 +174,8 @@ def main():
                 cv2.rectangle(final_video, (forehead_x1,forehead_y1),(forehead_x2,forehead_y2),(0,0,255),2)
                 amplified_face = final_video[yc:yc + hc,xc:xc + hc]
                 current_image[yc:yc + hc, xc:xc +hc] = amplified_face
-            cv2.imshow("final_vieo", current_image)
+
+            cv2.imshow("Analysing video", current_image)
             # capture frame-by-frame
             image_last = current_image
             faces_last = faces_current
@@ -237,7 +200,4 @@ def main():
     # When everything is done, release the capture
     video_capture.release()
 
-
-if __name__ == "__main__":
-    main()
 
