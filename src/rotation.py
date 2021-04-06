@@ -7,6 +7,7 @@ import cv2
 def check_rotation(path_video_file):
     # this returns meta-data of the video file in form of a dictionary
     meta_description = ffmpeg.probe(path_video_file)
+    print(meta_description)
     # from the dictionary, meta_dict['streams'][0]['tags']['rotate'] is the key
     # we are looking for
     rotateCode = None

@@ -3,11 +3,11 @@
 
 import cv2
 import os
-import sys
 import math
 import numpy as np
-import pandas as pd
 import time
+import pandas as pd
+import matplotlib as plt
 from face import recognize_face, forehead
 from plotting import create_bpm_plot, plot, create_green_plot,plot_green
 from rotation import check_rotation, correct_rotation
@@ -32,9 +32,6 @@ def Photoplethysmography(video):
 
     index = 0
 
-    axes, fig = create_bpm_plot()
-    fig.show()
-    axes1, fig1 = create_green_plot()
     while True:
         # get the first frame and get the face
         return_code, last_image = video_capture.read()
@@ -44,8 +41,27 @@ def Photoplethysmography(video):
         if len(faces_last) > 0:
             break
         cv2.imshow("Analysing video", last_image)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+        k = cv2.waitKey(1)
+        # esc = 27
+        if k == 27:
+            cv2.destroyAllWindows()
+            return
+        if k == 103:
+            try:
+                fig1.close()
+            except:
+                try:
+                    plt.close(fig1)
+                    axes1, fig1 = create_green_plot()
+                    plot_green(dfg, fig1, axes1)
+                except:
+                    try:
+                        axes1, fig1 = create_green_plot()
+                        plot_green(dfg, fig1, axes1)
+                    except:
+                        pass
+
+
 
     # assign the values to variables
     xl, yl, hl = faces_last[0][0], faces_last[0][1], faces_last[0][3]
@@ -67,9 +83,22 @@ def Photoplethysmography(video):
                 else:
                     cv2.imshow("Analysing video", current_image)
 
-                    k = cv2.waitKey(33)
+                    k = cv2.waitKey(1)
+
                     if k == 27:
-                        break
+                        cv2.destroyAllWindows()
+                        exit()
+                    if k == 103:
+                        try:
+                            plt.close(fig1)
+                            axes1, fig1 = create_green_plot()
+                            plot_green(dfg, fig1, axes1)
+                        except:
+                            try:
+                                axes1, fig1 = create_green_plot()
+                                plot_green(dfg, fig1, axes1)
+                            except:
+                                pass
             else:
                 break
 
@@ -104,8 +133,7 @@ def Photoplethysmography(video):
             times.append(time.time())
             buffer_green_mean.append(g_mean)
             current_size = len(buffer_green_mean)
-            # dfg = pd.DataFrame({'x': range(0, len(green_channel_values)), 'green': green_channel_values})
-            # plot_green(dfg,fig1,axes1)
+            dfg = pd.DataFrame({'x': range(0, len(green_channel_values)), 'green': green_channel_values})
             if current_size > buffer_size:
                 index+=1
                 times = times[1:]
@@ -116,11 +144,6 @@ def Photoplethysmography(video):
                 bpms.append(int(bpm))
                 string = 'BPM: ' + str(int(bpm))
                 cv2.putText(current_image, string, (top_left[0]+10,top_left[1]-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
-                print(bpm)
-                # dataframe
-                # df = pd.DataFrame({'x': range(0, index), 'bpm': bpms})
-                # plot(df,fig,axes)
-
 
             cv2.rectangle(current_image, (forehead_x1,forehead_y1),(forehead_x2,forehead_y2),(0,0,255),2)
 
@@ -135,6 +158,17 @@ def Photoplethysmography(video):
 
             if k==27:
                 break
+            if k == 103:
+                try:
+                    plt.close(1)
+                    axes1, fig1 = create_green_plot()
+                    plot_green(dfg, fig1, axes1)
+                except:
+                    try:
+                        axes1, fig1 = create_green_plot()
+                        plot_green(dfg, fig1, axes1)
+                    except:
+                        pass
 
         else:
             break

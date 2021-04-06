@@ -36,9 +36,6 @@ def EVM(video):
 
     index = 0
 
-    axes, fig = create_bpm_plot()
-    fig.show()
-
     while True:
         # get the first frame and get the face
         return_code, last_image = video_capture.read()
@@ -48,8 +45,25 @@ def EVM(video):
         if len(faces_last) > 0:
             break
         cv2.imshow("Analysing video", last_image)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+        k = cv2.waitKey(1)
+        # esc = 27
+        if k == 27:
+            cv2.destroyAllWindows()
+            return
+        if k == 103:
+            try:
+                fig1.close()
+            except:
+                try:
+                    plt.close(fig1)
+                    axes1, fig1 = create_green_plot()
+                    plot_green(dfg, fig1, axes1)
+                except:
+                    try:
+                        axes1, fig1 = create_green_plot()
+                        plot_green(dfg, fig1, axes1)
+                    except:
+                        pass
 
     # assign the values to variables
     xl, yl, hl = faces_last[0][0], faces_last[0][1], faces_last[0][3]
@@ -73,9 +87,22 @@ def EVM(video):
                 else:
                     cv2.imshow("Analysing video", current_image)
 
-                    k = cv2.waitKey(33)
+                    k = cv2.waitKey(1)
+
                     if k == 27:
-                        break
+                        cv2.destroyAllWindows()
+                        exit()
+                    if k == 103:
+                        try:
+                            plt.close(fig1)
+                            axes1, fig1 = create_green_plot()
+                            plot_green(dfg, fig1, axes1)
+                        except:
+                            try:
+                                axes1, fig1 = create_green_plot()
+                                plot_green(dfg, fig1, axes1)
+                            except:
+                                pass
             else:
                 break
 
@@ -83,8 +110,7 @@ def EVM(video):
             xc, yc, hc = faces_current[0][0], faces_current[0][1], faces_current[0][3]
             if hc % 2 == 1:
                 hc += 1
-            # current_image[10:10+rwidth,swidth:width-10] = face
-            axes1, fig1 = create_green_plot()
+
             try:
                 change_top_left = math.sqrt(((xl - xc) ** 2) + (yl - yc) ** 2)
                 change_bottom_right = math.sqrt(((xl + hl - xc - hc) ** 2) + (yl + hl - yc - hc) ** 2)
@@ -113,11 +139,12 @@ def EVM(video):
             pyramids.append(gaussianPyramid[-1])
 
             if len(pyramids) > 30:
+
                 frames_arr = np.asarray(pyramids[-30:], dtype=np.float64)
                 fft = fftpack.fft(frames_arr, axis=0)
                 frequencies = fftpack.fftfreq(frames_arr.shape[0], d=1.0 / 12)
-                bound_low = (np.abs(frequencies - 0.5)).argmin()
-                bound_high = (np.abs(frequencies - 3.1)).argmin()
+                bound_low = (np.abs(frequencies - 0.66667)).argmin()
+                bound_high = (np.abs(frequencies - 3.0)).argmin()
                 fft[:bound_low] = 0
                 fft[bound_high:-bound_high] = 0
                 fft[-bound_low:] = 0
@@ -128,10 +155,11 @@ def EVM(video):
                 amplifiedFrame = fft*100
 
                 final_video = np.zeros(current_image.shape)
-                img = amplifiedFrame[-1]
-                for x in range(7):
-                    size = (amplifiedFrame[x].shape[1], amplifiedFrame[x].shape[0])
-                    img = cv2.pyrUp(img,dstsize = size)
+
+                for x in range(7,0,-1):
+                    size = (amplifiedFrame[x-1].shape[1], amplifiedFrame[x-1].shape[0])
+                    img = cv2.pyrUp(amplifiedFrame[x],dstsize = size)
+                    img = cv2.resize(img, amplifiedFrame[x - 1].shape[-2::-1])
                 img = img+current_image
                 final_video = img
 
@@ -149,10 +177,9 @@ def EVM(video):
                 blue_channel_values.append(b_mean)
                 times.append(time.time())
                 buffer_green_mean.append(g_mean)
-                axes1, fig1 = create_green_plot()
                 current_size = len(buffer_green_mean)
                 dfg = pd.DataFrame({'x': range(0, current_size), 'green': buffer_green_mean})
-                plot_green(dfg,fig1,axes1)
+
                 if current_size > buffer_size:
                     index+=1
                     times = times[1:]
@@ -166,9 +193,6 @@ def EVM(video):
                     print(bpm)
                     string = 'BPM: ' + str(int(bpm))
                     cv2.putText(current_image, string, (top_left[0] + 10, top_left[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
-                    # dataframe
-                    df = pd.DataFrame({'x': range(0, index), 'bpm': bpms})
-                    plot(df,fig,axes)
 
 
                 cv2.rectangle(final_video, (forehead_x1,forehead_y1),(forehead_x2,forehead_y2),(0,0,255),2)
@@ -181,12 +205,21 @@ def EVM(video):
             faces_last = faces_current
             xl, yl, hl = xc, yc, hc
 
-
-
             k = cv2.waitKey(1)
 
-            if k==27:
+            if k == 27:
                 break
+            if k == 103:
+                try:
+                    plt.close(1)
+                    axes1, fig1 = create_green_plot()
+                    plot_green(dfg, fig1, axes1)
+                except:
+                    try:
+                        axes1, fig1 = create_green_plot()
+                        plot_green(dfg, fig1, axes1)
+                    except:
+                        pass
 
         else:
             break

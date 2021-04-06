@@ -1,0 +1,27 @@
+ffmpeg started on 2021-03-31 at 21:30:09
+Report written to "ffmpeg-20210331-213009.log"
+Log level: 48
+Command line:
+"C:\\ffmpeg\\bin\\ffmpeg.exe" test1-1.mp4 -report
+ffmpeg version 2021-03-07-git-a7f841718f-full_build-www.gyan.dev Copyright (c) 2000-2021 the FFmpeg developers
+  built with gcc 10.2.0 (Rev6, Built by MSYS2 project)
+  configuration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-fontconfig --enable-iconv --enable-gnutls --enable-libxml2 --enable-gmp --enable-lzma --enable-libsnappy --enable-zlib --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-libbluray --enable-libcaca --enable-sdl2 --enable-libdav1d --enable-libzvbi --enable-librav1e --enable-libsvtav1 --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxvid --enable-libaom --enable-libopenjpeg --enable-libvpx --enable-libass --enable-frei0r --enable-libfreetype --enable-libfribidi --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-ffnvcodec --enable-nvdec --enable-nvenc --enable-d3d11va --enable-dxva2 --enable-libmfx --enable-libglslang --enable-vulkan --enable-opencl --enable-libcdio --enable-libgme --enable-libmodplug --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libshine --enable-libtheora   libavutil      56. 67.100 / 56. 67.100
+  libavcodec     58.129.100 / 58.129.100
+  libavformat    58. 71.100 / 58. 71.100
+  libavdevice    58. 12.100 / 58. 12.100
+  libavfilter     7.109.100 /  7.109.100
+  libswscale      5.  8.100 /  5.  8.100
+  libswresample   3.  8.100 /  3.  8.100
+  libpostproc    55.  8.100 / 55.  8.100
+Splitting the commandline.
+Reading option 'test1-1.mp4' ... matched as output url.
+Reading option '-report' ... matched as option 'report' (generate a report) with argument '1'.
+Finished splitting the commandline.
+Parsing a group of options: global .
+Applying option report (generate a report) with argument 1.
+Successfully parsed a group of options.
+Parsing a group of options: output url test1-1.mp4.
+Successfully parsed a group of options.
+Opening an output file: test1-1.mp4.
+Output #0, mp4, to 'test1-1.mp4':
+Output file #0 does not contain any stream

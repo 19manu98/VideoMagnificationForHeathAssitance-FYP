@@ -10,6 +10,7 @@ def processing(buffer_green_mean,times, buffer_size,real_fps):
         # calculate real fps regarding processor
         if real_fps is None:
             real_fps = float(buffer_size) / (times[-1] - times[0])
+
         # signal detrending
         signal_detrend = signal.detrend(buffer_green_mean)
 
@@ -21,6 +22,7 @@ def processing(buffer_green_mean,times, buffer_size,real_fps):
         highsignal = 3 / nyq  # 3 correspond to 180bpm
 
         b, a = butter(order, [lowsignal, highsignal], btype='band', analog=True)
+
         # signal_detrend = filtfilt(b,a,signal_detrend)
         signal_detrend = lfilter(b, a, signal_detrend)
 
@@ -37,14 +39,12 @@ def processing(buffer_green_mean,times, buffer_size,real_fps):
         # fast fourier transform
         raw_signal = np.fft.fft(signal_normalization)
         fft = np.abs(raw_signal)
-        # fft = signal.detrend(fft)
+
 
         # freqs = float(real_fps)/current_size*np.arange(current_size/2+1)
         freqs = np.fft.rfftfreq(buffer_size, 1. / real_fps)
-
-        freqs = 60. * freqs
-
-        idx = np.where((freqs >= 40) & (freqs < 130))
+        freqs = freqs * 60.
+        idx = np.where((freqs >= 40) & (freqs < 180))
 
         pruned = fft[idx]
         pfreq = freqs[idx]
